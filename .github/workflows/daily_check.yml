@@ -1,0 +1,82 @@
+name: Diesel Price Alert
+
+on:
+  # รันทุกวัน 06:00 น. เวลาไทย (UTC+7) = 23:00 UTC ของวันก่อน
+  schedule:
+    - cron: '0 23 * * *'
+
+  # รันด้วยมือได้จาก GitHub UI (Actions → Run workflow)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (แสดงผลแต่ไม่ส่ง LINE)?'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      force_price:
+        description: 'Force ราคาน้ำมัน (ว่างไว้ = scrape จริง)'
+        required: false
+        default: ''
+
+jobs:
+  check-and-alert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # ต้องการเพื่อ commit freight_state.json กลับ repo
+
+    steps:
+      # 1) Checkout repo
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) ติดตั้ง Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      # 3) ติดตั้ง dependencies
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 3b) ติดตั้ง Playwright browser (headless Chromium สำหรับ JS rendering)
+      - name: Install Playwright browsers
+        run: playwright install --with-deps chromium
+
+      # 4) รัน script หลัก
+      - name: Run diesel alert
+        env:
+          LINE_TOKEN:   ${{ secrets.LINE_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: |
+          ARGS=""
+
+          # dry run flag
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            ARGS="$ARGS --dry-run"
+          fi
+
+          # force price (manual run เท่านั้น)
+          if [ -n "${{ github.event.inputs.force_price }}" ]; then
+            ARGS="$ARGS --force-price ${{ github.event.inputs.force_price }}"
+          fi
+
+          python3 diesel_alert.py $ARGS
+
+      # 5) Commit freight_state.json กลับ repo (ถ้ามีการเปลี่ยนแปลง)
+      - name: Commit state file
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet freight_state.json; then
+            echo "State ไม่เปลี่ยน — ไม่ต้อง commit"
+          else
+            git add freight_state.json
+            git commit -m "chore: update freight_state $(date -u +'%Y-%m-%d')"
+            git push
+          fi

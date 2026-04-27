@@ -1,0 +1,18 @@
+{
+  "_comment": "TOKEN และ USER_ID ห้ามใส่ในไฟล์นี้ถ้า repo เป็น public — ใส่ใน GitHub Secrets แทน (LINE_TOKEN, LINE_USER_ID)",
+  "lineNotifyToken": "",
+  "lineUserId": "",
+  "rules": {
+    "normalThreshold": 0.50,
+    "specialThreshold": 2.00,
+    "oilType": "Hi Diesel B7",
+    "refRegion": "กทม.-ปริมณฑล",
+    "oilCompany": "PTT"
+  },
+  "roundSchedule": {
+    "round1": { "refDay": 27, "prevMonth": true,  "rateStart": 1,  "rateEnd": 7  },
+    "round2": { "refDay": 5,  "prevMonth": false, "rateStart": 8,  "rateEnd": 14 },
+    "round3": { "refDay": 12, "prevMonth": false, "rateStart": 15, "rateEnd": 21 },
+    "round4": { "refDay": 19, "prevMonth": false, "rateStart": 22, "rateEnd": 31 }
+  }
+}
