@@ -1048,7 +1048,7 @@ def build_message(
             f"📊 เปลี่ยนสะสม: {cumul_sign}{cumulative_change:.2f} บาท/ลิตร",
             "",
             "✅ ไม่ต้องปรับอัตราค่าขนส่ง",
-            f"📏 ห่างจากเกณฑ์พิเศษอีก {2.00 - abs_single:.2f} บาท",
+            f"📏 ห่างจากเกณฑ์พิเศษอีก {2.00 - abs_cumul:.2f} บาท",
         ]
         if is_ref_day(today):
             lines.append(
@@ -1078,7 +1078,7 @@ def build_message(
             "",
             f"💰 Hi Diesel B7 (PTT): {today_price:.2f} บาท/ลิตร",
             f"📌 อ้างอิงล่าสุด: {last_adj_price:.2f} บาท ({last_adj_str})",
-            f"📊 เปลี่ยนครั้งนี้: {single_sign}{single_change:.2f} บาท/ลิตร ⚠️",
+            f"📊 เปลี่ยนสะสม: {cumul_sign}{cumulative_change:.2f} บาท/ลิตร ⚠️",
             "",
             "⚡ เกินเกณฑ์ 2.00 บาท → กรณีพิเศษ",
             f"📅 มีผลพรุ่งนี้ ({thai_date(tomorrow)})",
@@ -1156,11 +1156,11 @@ def main():
         abs_single = abs_cumul = 0.0
 
     # 6) ตัดสินใจ
-    # พิเศษ: single change > 2.00 ฿ (ราคา PTT กระโดดครั้งเดียว)
+    # พิเศษ: cumulative change > 2.00 ฿ (สะสมจากการปรับล่าสุด — ทั้ง special และ regular)
     # ปกติ:  cumulative ≥ 0.50 ฿ บนวันอ้างอิง (สะสมจากการปรับล่าสุด)
     decision = "none"
     if today_price is not None:
-        if abs_single > cfg["rules"]["specialThreshold"]:              # > 2.00
+        if abs_cumul > cfg["rules"]["specialThreshold"]:               # > 2.00 (cumulative)
             decision = "special"
         elif ref_today and abs_cumul >= cfg["rules"]["normalThreshold"]:  # ≥ 0.50
             decision = "regular"
