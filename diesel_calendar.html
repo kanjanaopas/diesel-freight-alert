@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ราคาน้ำมัน Hi Diesel B7 | ระบบค่าขนส่ง</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: #f0f4f8;
+    color: #2d3748;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .header h1 { font-size: 1.4rem; font-weight: 700; }
+  .header .subtitle { font-size: 0.85rem; opacity: 0.8; margin-top: 2px; }
+  .last-updated { font-size: 0.78rem; opacity: 0.7; text-align: right; }
+
+  /* ── Dashboard Cards ── */
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 20px 24px 8px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border-left: 4px solid #e2e8f0;
+  }
+  .card.price   { border-left-color: #3182ce; }
+  .card.status  { border-left-color: #38a169; }
+  .card.round   { border-left-color: #d69e2e; }
+  .card.next    { border-left-color: #805ad5; }
+
+  .card .label  { font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+                  letter-spacing: .05em; color: #718096; margin-bottom: 6px; }
+  .card .value  { font-size: 1.9rem; font-weight: 700; line-height: 1; }
+  .card .sub    { font-size: 0.78rem; color: #718096; margin-top: 4px; }
+
+  .card.price .value { color: #2b6cb0; }
+
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-top: 6px;
+  }
+  .badge-ok       { background: #c6f6d5; color: #22543d; }
+  .badge-regular  { background: #fefcbf; color: #744210; }
+  .badge-special  { background: #fed7d7; color: #742a2a; }
+
+  /* ── Calendar Container ── */
+  .cal-wrapper {
+    padding: 8px 24px 24px;
+  }
+  .cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .cal-title { font-size: 1.05rem; font-weight: 700; color: #2d3748; }
+  .cal-nav button {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: #4a5568;
+    transition: background .15s;
+  }
+  .cal-nav button:hover { background: #edf2f7; }
+  .cal-nav .today-btn {
+    margin: 0 6px;
+    background: #ebf8ff;
+    border-color: #bee3f8;
+    color: #2b6cb0;
+  }
+
+  /* ── Calendar Grid ── */
+  .calendar {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .cal-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: #2b6cb0;
+    color: white;
+  }
+  .cal-days-header .dh {
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .cal-days-header .dh.weekend { opacity: 0.75; }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .cal-cell {
+    min-height: 72px;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 6px 8px;
+    position: relative;
+    transition: background .12s;
+  }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell:hover { background: #f7fafc; }
+
+  .cal-cell.empty { background: #fafafa; }
+
+  .day-num {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4a5568;
+    line-height: 1;
+  }
+  .cal-cell.weekend .day-num { color: #e53e3e; }
+
+  /* Highlights */
+  .cal-cell.today { background: #ebf8ff; }
+  .cal-cell.today .day-num {
+    background: #2b6cb0;
+    color: white;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem;
+  }
+  .cal-cell.ref-day { border-top: 3px solid #3182ce; }
+  .cal-cell.rate-period { background: #fffff0; }
+  .cal-cell.adj-day { background: #f0fff4; }
+  .cal-cell.adj-day-special { background: #fff5f5; }
+
+  .day-tag {
+    font-size: 0.62rem;
+    font-weight: 600;
+    border-radius: 3px;
+    padding: 1px 4px;
+    margin-top: 4px;
+    display: inline-block;
+  }
+  .tag-ref     { background: #bee3f8; color: #2c5282; }
+  .tag-rate    { background: #fefcbf; color: #744210; }
+  .tag-adj     { background: #c6f6d5; color: #22543d; }
+  .tag-special { background: #fed7d7; color: #742a2a; }
+
+  .day-price {
+    font-size: 0.72rem;
+    color: #2b6cb0;
+    font-weight: 700;
+    margin-top: 3px;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 24px 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    color: #4a5568;
+  }
+  .legend-box {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+  .lb-today   { background: #2b6cb0; border-radius: 50%; }
+  .lb-ref     { border-top: 3px solid #3182ce; background: white; border: 1px solid #e2e8f0; border-top: 3px solid #3182ce; }
+  .lb-rate    { background: #fffff0; border: 1px solid #e2e8f0; }
+  .lb-adj     { background: #f0fff4; border: 1px solid #e2e8f0; }
+  .lb-special { background: #fff5f5; border: 1px solid #e2e8f0; }
+
+  /* ── Loading / Error ── */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #718096;
+    font-size: 0.9rem;
+  }
+  .error-msg {
+    background: #fff5f5;
+    border: 1px solid #fc8181;
+    color: #742a2a;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 24px;
+    font-size: 0.85rem;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .header { padding: 14px 16px; }
+    .dashboard { padding: 14px 16px 6px; gap: 10px; }
+    .cal-wrapper { padding: 6px 16px 20px; }
+    .legend { padding: 10px 16px 16px; }
+    .cal-cell { min-height: 58px; padding: 4px 5px; }
+    .dashboard { grid-template-columns: 1fr 1fr; }
+    .card .value { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🛢️ ราคา Hi Diesel B7 (PTT)</h1>
+    <div class="subtitle">ระบบติดตามราคาน้ำมันเพื่อปรับค่าขนส่งคอนกรีต</div>
+  </div>
+  <div class="last-updated" id="lastUpdated">กำลังโหลด...</div>
+</div>
+
+<div id="errorBox" style="display:none" class="error-msg"></div>
+
+<div class="dashboard" id="dashboard">
+  <div class="card price">
+    <div class="label">ราคาปัจจุบัน</div>
+    <div class="value" id="curPrice">—</div>
+    <div class="sub" id="priceDate">—</div>
+  </div>
+  <div class="card status">
+    <div class="label">สถานะค่าขนส่ง</div>
+    <div class="value" style="font-size:1.1rem;padding-top:4px" id="statusText">—</div>
+    <div id="statusBadge"></div>
+  </div>
+  <div class="card round">
+    <div class="label">รอบปัจจุบัน</div>
+    <div class="value" id="roundNum">—</div>
+    <div class="sub" id="roundPeriod">—</div>
+  </div>
+  <div class="card next">
+    <div class="label">วันอ้างอิงถัดไป</div>
+    <div class="value" style="font-size:1.1rem;padding-top:4px" id="nextRef">—</div>
+    <div class="sub" id="nextRoundStart">—</div>
+  </div>
+</div>
+
+<div class="cal-wrapper">
+  <div class="cal-header">
+    <div class="cal-title" id="calTitle">—</div>
+    <div class="cal-nav">
+      <button onclick="changeMonth(-1)">&#8249; ก่อนหน้า</button>
+      <button class="today-btn" onclick="goToday()">วันนี้</button>
+      <button onclick="changeMonth(1)">ถัดไป &#8250;</button>
+    </div>
+  </div>
+  <div class="calendar">
+    <div class="cal-days-header">
+      <div class="dh weekend">อา</div>
+      <div class="dh">จ</div>
+      <div class="dh">อ</div>
+      <div class="dh">พ</div>
+      <div class="dh">พฤ</div>
+      <div class="dh">ศ</div>
+      <div class="dh weekend">ส</div>
+    </div>
+    <div class="cal-grid" id="calGrid">
+      <div class="loading">กำลังโหลดข้อมูล...</div>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-box lb-today"></div> วันนี้
+  </div>
+  <div class="legend-item">
+    <div class="legend-box lb-ref"></div> วันอ้างอิง (5,12,19,27)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box lb-rate"></div> ช่วงใช้อัตราค่าขนส่ง
+  </div>
+  <div class="legend-item">
+    <div class="legend-box lb-adj"></div> วันปรับค่าขนส่ง (ปกติ)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box lb-special"></div> วันปรับค่าขนส่ง (พิเศษ)
+  </div>
+</div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────────
+const GITHUB_RAW = 'https://raw.githubusercontent.com/kanjanaopas/diesel-freight-alert/main/freight_state.json';
+const REF_DAYS = [5, 12, 19, 27];
+const TH_MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
+                   'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TH_MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                        'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+// ── State ────────────────────────────────────────────────────────────
+let stateData = null;
+let viewYear, viewMonth;
+
+const todayTH = (() => {
+  const utc = new Date();
+  const thai = new Date(utc.getTime() + 7 * 3600000);
+  return { y: thai.getUTCFullYear(), m: thai.getUTCMonth() + 1, d: thai.getUTCDate() };
+})();
+
+viewYear  = todayTH.y;
+viewMonth = todayTH.m;
+
+// ── Utilities ────────────────────────────────────────────────────────
+function thaiYear(y) { return y + 543; }
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return `${d.getDate()} ${TH_MONTHS[d.getMonth()+1]} ${thaiYear(d.getFullYear())}`;
+}
+function parseIso(iso) {
+  if (!iso) return null;
+  const d = new Date(iso + 'T00:00:00');
+  return { y: d.getFullYear(), m: d.getMonth()+1, d: d.getDate() };
+}
+function sameDay(a, b) {
+  return a && b && a.y === b.y && a.m === b.m && a.d === b.d;
+}
+function isBetween(cell, start, end) {
+  if (!start || !end) return false;
+  const c = cell.y * 10000 + cell.m * 100 + cell.d;
+  const s = start.y * 10000 + start.m * 100 + start.d;
+  const e = end.y * 10000 + end.m * 100 + end.d;
+  return c >= s && c <= e;
+}
+
+// ── Fetch data ───────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const res = await fetch(GITHUB_RAW + '?t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    stateData = await res.json();
+    renderDashboard();
+    renderCalendar();
+    document.getElementById('lastUpdated').textContent =
+      'อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH');
+  } catch(e) {
+    showError('ไม่สามารถโหลดข้อมูลได้: ' + e.message);
+    renderCalendar(); // render calendar without price data
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+}
+
+// ── Dashboard ────────────────────────────────────────────────────────
+function renderDashboard() {
+  if (!stateData) return;
+  const s = stateData;
+
+  // Price
+  const price = parseFloat(s.lastAdjPrice || 0).toFixed(2);
+  document.getElementById('curPrice').textContent = price + ' ฿';
+  document.getElementById('priceDate').textContent =
+    'อ้างอิง ณ ' + fmtDate(s.lastAdjDate);
+
+  // Status
+  const adjType = s.lastAdjType || '';
+  let statusText = '✅ ไม่ต้องปรับ', badgeClass = 'badge-ok', badgeText = 'ปกติ';
+  if (adjType === 'regular') {
+    statusText = '📋 ปรับรอบปกติ'; badgeClass = 'badge-regular'; badgeText = 'รอบปกติ';
+  } else if (adjType === 'special') {
+    statusText = '🚨 ปรับกรณีพิเศษ'; badgeClass = 'badge-special'; badgeText = 'กรณีพิเศษ';
+  } else if (adjType === 'ref-no-adj') {
+    statusText = '✅ ไม่ถึงเกณฑ์'; badgeClass = 'badge-ok'; badgeText = 'ไม่ปรับ';
+  }
+  document.getElementById('statusText').textContent = statusText;
+  document.getElementById('statusBadge').innerHTML =
+    `<span class="status-badge ${badgeClass}">${badgeText}</span>`;
+
+  // Round
+  const cr = s.currentRound || {};
+  document.getElementById('roundNum').textContent = 'รอบ ' + (cr.num || '—');
+  if (cr.rateStart && cr.rateEnd) {
+    document.getElementById('roundPeriod').textContent =
+      fmtDate(cr.rateStart) + ' – ' + fmtDate(cr.rateEnd);
+  }
+
+  // Next ref date
+  document.getElementById('nextRef').textContent = fmtDate(s.nextRegularRefDate);
+  if (s.nextRegularRoundStart) {
+    document.getElementById('nextRoundStart').textContent =
+      'รอบใหม่เริ่ม ' + fmtDate(s.nextRegularRoundStart);
+  }
+}
+
+// ── Calendar ─────────────────────────────────────────────────────────
+function renderCalendar() {
+  const y = viewYear, m = viewMonth;
+  document.getElementById('calTitle').textContent =
+    TH_MONTHS_FULL[m] + ' ' + thaiYear(y);
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  // Extract state dates
+  let adjDate = null, rateStart = null, rateEnd = null, adjType = '';
+  if (stateData) {
+    adjDate   = parseIso(stateData.lastAdjDate);
+    adjType   = stateData.lastAdjType || '';
+    const cr  = stateData.currentRound || {};
+    rateStart = parseIso(cr.rateStart);
+    rateEnd   = parseIso(cr.rateEnd);
+  }
+
+  // First weekday of month (0=Sun)
+  const firstDay = new Date(y, m - 1, 1).getDay();
+  const daysInMonth = new Date(y, m, 0).getDate();
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell empty';
+    grid.appendChild(cell);
+  }
+
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const cell = document.createElement('div');
+    const dow = (firstDay + d - 1) % 7; // 0=Sun, 6=Sat
+    const isWeekend = dow === 0 || dow === 6;
+    const isToday = sameDay({y, m, d}, todayTH);
+    const isRefDay = REF_DAYS.includes(d);
+    const dayObj = {y, m, d};
+    const isAdjDay = sameDay(dayObj, adjDate);
+    const isRatePeriod = isBetween(dayObj, rateStart, rateEnd);
+    const isSpecialAdj = isAdjDay && adjType === 'special';
+
+    let classes = 'cal-cell';
+    if (isWeekend) classes += ' weekend';
+    if (isToday)   classes += ' today';
+    if (isRefDay && !isToday) classes += ' ref-day';
+    if (isRatePeriod && !isAdjDay) classes += ' rate-period';
+    if (isAdjDay && !isSpecialAdj) classes += ' adj-day';
+    if (isSpecialAdj) classes += ' adj-day-special';
+
+    cell.className = classes;
+
+    // Day number
+    const numEl = document.createElement('div');
+    numEl.className = 'day-num';
+    numEl.textContent = d;
+    cell.appendChild(numEl);
+
+    // Tags
+    const tags = [];
+    if (isRefDay) tags.push(['วันอ้างอิง', 'tag-ref']);
+    if (isRatePeriod) tags.push(['ใช้อัตรานี้', 'tag-rate']);
+    if (isAdjDay && !isSpecialAdj) tags.push(['ปรับปกติ', 'tag-adj']);
+    if (isSpecialAdj) tags.push(['ปรับพิเศษ', 'tag-special']);
+
+    tags.forEach(([text, cls]) => {
+      const t = document.createElement('div');
+      t.className = 'day-tag ' + cls;
+      t.textContent = text;
+      cell.appendChild(t);
+    });
+
+    // Show price on adjustment day
+    if (isAdjDay && stateData) {
+      const pr = document.createElement('div');
+      pr.className = 'day-price';
+      pr.textContent = parseFloat(stateData.lastAdjPrice).toFixed(2) + ' ฿';
+      cell.appendChild(pr);
+    }
+
+    grid.appendChild(cell);
+  }
+
+  // Fill trailing cells to complete last row
+  const totalCells = firstDay + daysInMonth;
+  const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for (let i = 0; i < trailing; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell empty';
+    grid.appendChild(cell);
+  }
+}
+
+// ── Navigation ───────────────────────────────────────────────────────
+function changeMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth > 12) { viewMonth = 1; viewYear++; }
+  if (viewMonth < 1)  { viewMonth = 12; viewYear--; }
+  renderCalendar();
+}
+function goToday() {
+  viewYear = todayTH.y; viewMonth = todayTH.m;
+  renderCalendar();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+loadData();
+// Auto-refresh ทุก 30 นาที
+setInterval(loadData, 30 * 60 * 1000);
+</script>
+</body>
+</html>
