@@ -431,26 +431,27 @@ function dateKey(y, m, d) {
 
 // ── Calculate adjustments from price history ─────────────────────────
 // กฎ:
-//   พิเศษ  — เปรียบกับราคา PTT ครั้งล่าสุด (single-day change) > 2.00 ฿
-//   ปกติ   — เปรียบกับ lastAdjPrice (cumulative) ≥ 0.50 ฿ บนวันอ้างอิงเท่านั้น
+//   พิเศษ  — เปลี่ยนสะสมจาก lastAdjPrice (cumulative) > 2.00 ฿ (ใช้ได้ทุกวัน)
+//   ปกติ   — เปลี่ยนสะสมจาก lastAdjPrice (cumulative) ≥ 0.50 ฿ บนวันอ้างอิงเท่านั้น
+//   ทั้งสองใช้ cumulative จาก lastAdjPrice เหมือนกัน, reset หลังปรับทุกครั้ง
 function buildAdjMaps(history, startPrice) {
   const pMap = {}, aMap = {};
-  let lastAdjPrice = startPrice;   // reset เมื่อมีการปรับ (ใช้สำหรับ regular)
-  let prevPTTPrice = startPrice;   // ราคา PTT ก่อนหน้า (ใช้สำหรับ special)
+  let lastAdjPrice = startPrice;   // reset เมื่อมีการปรับ (ใช้สำหรับ ทั้ง special และ regular)
+  let prevPTTPrice = startPrice;   // ราคา PTT ก่อนหน้า (ใช้สำหรับ dailyChange แสดงผลเท่านั้น)
 
   for (const {date, price} of history) {
     pMap[date] = price;
     const day   = parseInt(date.split('-')[2]);
     const isRef = REF_DAYS_SET.has(day);
 
-    const singleChg = price - prevPTTPrice;   // เปลี่ยนครั้งนี้ (สำหรับ special)
-    const cumulChg  = price - lastAdjPrice;   // สะสมจากการปรับล่าสุด (สำหรับ regular)
+    const singleChg = price - prevPTTPrice;   // เปลี่ยนวันต่อวัน (สำหรับแสดงใน cell เท่านั้น)
+    const cumulChg  = price - lastAdjPrice;   // สะสมจากการปรับล่าสุด (ใช้ตัดสินใจทั้ง special+regular)
 
     let adjType = null, displayChange = null;
 
-    if (Math.abs(singleChg) > SPECIAL_THR) {
+    if (Math.abs(cumulChg) > SPECIAL_THR) {
       adjType = 'special';
-      displayChange = singleChg;
+      displayChange = cumulChg;
     } else if (isRef && Math.abs(cumulChg) >= NORMAL_THR) {
       adjType = 'regular';
       displayChange = cumulChg;
