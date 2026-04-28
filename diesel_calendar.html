@@ -124,7 +124,7 @@
   }
 
   .cal-cell {
-    min-height: 86px;
+    min-height: 96px;
     border-right: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     padding: 6px 8px;
@@ -184,6 +184,12 @@
     color: #2b6cb0;
     font-weight: 700;
     margin-top: 3px;
+  }
+  .day-change {
+    font-size: 0.63rem;
+    font-weight: 700;
+    margin-top: 1px;
+    line-height: 1.1;
   }
 
   /* ── Legend ── */
@@ -453,7 +459,7 @@ function buildAdjMaps(history, startPrice) {
       displayChange = cumulChg;
     }
 
-    aMap[date] = { adjType, price, change: displayChange, isRef };
+    aMap[date] = { adjType, price, change: displayChange, dailyChange: singleChg, isRef };
 
     prevPTTPrice = price;                                       // อัปเดตทุกวัน
     if (adjType === 'special' || adjType === 'regular') {
@@ -623,12 +629,30 @@ function renderCalendar() {
     numEl.textContent = d;
     cell.appendChild(numEl);
 
-    // ── Price ──
+    // ── Price + Daily Change ──
     if (dayPrice !== null) {
       const prEl = document.createElement('div');
       prEl.className = 'day-price';
       prEl.textContent = dayPrice.toFixed(2) + ' ฿';
       cell.appendChild(prEl);
+
+      // Daily change vs previous PTT price
+      const dc = (adjMap[dKey] || {}).dailyChange;
+      if (dc !== undefined) {
+        const chgEl = document.createElement('div');
+        chgEl.className = 'day-change';
+        if (dc > 0.001) {
+          chgEl.textContent = '+' + dc.toFixed(2);
+          chgEl.style.color = '#c53030';   // ขึ้น = แดง
+        } else if (dc < -0.001) {
+          chgEl.textContent = dc.toFixed(2);
+          chgEl.style.color = '#276749';   // ลง = เขียว
+        } else {
+          chgEl.textContent = '—';
+          chgEl.style.color = '#a0aec0';   // ไม่เปลี่ยน = เทา
+        }
+        cell.appendChild(chgEl);
+      }
     } else if (!hasHistory && isAdjDay && stateData) {
       const prEl = document.createElement('div');
       prEl.className = 'day-price';
