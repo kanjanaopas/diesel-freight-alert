@@ -14,5 +14,6 @@
     "round2": { "refDay": 5,  "prevMonth": false, "rateStart": 8,  "rateEnd": 14 },
     "round3": { "refDay": 12, "prevMonth": false, "rateStart": 15, "rateEnd": 21 },
     "round4": { "refDay": 19, "prevMonth": false, "rateStart": 22, "rateEnd": 31 }
-  }
+  },
+  "dashboardUrl": "https://oil.aris-server.com"
 }

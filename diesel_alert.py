@@ -1013,22 +1013,31 @@ def build_message(
     decision: str,          # "none" | "regular" | "special"
     round_info: dict,
     cumulative_change: float,
+    single_change: float = 0.0,   # เปลี่ยนครั้งนี้ (สำหรับ special)
     source: str = "",
+    dashboard_url: str = "",
 ) -> str:
     today_str = thai_date(today)
     last_adj_str = thai_date(date.fromisoformat(last_adj_date))
 
     if today_price is None:
-        return (
-            f"⚠️ ระบบแจ้งเตือนราคาน้ำมัน | {today_str}\n\n"
-            f"❌ ไม่สามารถดึงราคาน้ำมัน Hi Diesel B7 ได้วันนี้\n"
-            f"📌 อ้างอิงล่าสุด: {last_adj_price:.2f} บาท ({last_adj_str})\n\n"
-            f"🔍 กรุณาตรวจสอบด้วยตนเองที่:\n"
-            f"https://www.pttor.com/th/oilprice"
-        )
+        lines_err = [
+            f"⚠️ ระบบแจ้งเตือนราคาน้ำมัน | {today_str}",
+            "",
+            f"❌ ไม่สามารถดึงราคาน้ำมัน Hi Diesel B7 ได้วันนี้",
+            f"📌 อ้างอิงล่าสุด: {last_adj_price:.2f} บาท ({last_adj_str})",
+            "",
+            f"🔍 กรุณาตรวจสอบด้วยตนเองที่:",
+            f"https://www.pttor.com/th/oilprice",
+        ]
+        if dashboard_url:
+            lines_err.append(f"📊 Dashboard: {dashboard_url}")
+        return "\n".join(lines_err)
 
-    chg_sign = "+" if cumulative_change >= 0 else ""
-    abs_chg  = abs(cumulative_change)
+    cumul_sign  = "+" if cumulative_change >= 0 else ""
+    single_sign = "+" if single_change >= 0 else ""
+    abs_single  = abs(single_change)
+    abs_cumul   = abs(cumulative_change)
 
     if decision == "none":
         lines = [
@@ -1036,26 +1045,26 @@ def build_message(
             "",
             f"💰 Hi Diesel B7 (PTT): {today_price:.2f} บาท/ลิตร",
             f"📌 อ้างอิงล่าสุด: {last_adj_price:.2f} บาท ({last_adj_str})",
-            f"📊 เปลี่ยนสะสม: {chg_sign}{cumulative_change:.2f} บาท/ลิตร",
+            f"📊 เปลี่ยนสะสม: {cumul_sign}{cumulative_change:.2f} บาท/ลิตร",
             "",
             "✅ ไม่ต้องปรับอัตราค่าขนส่ง",
-            f"📏 ห่างจากเกณฑ์พิเศษอีก {2.00 - abs_chg:.2f} บาท",
+            f"📏 ห่างจากเกณฑ์พิเศษอีก {2.00 - abs_single:.2f} บาท",
         ]
         if is_ref_day(today):
             lines.append(
                 f"📋 วันอ้างอิงรอบ {round_info['num']} — "
-                f"เปลี่ยน {chg_sign}{cumulative_change:.2f} บาท (น้อยกว่าเกณฑ์ 0.50 บาท)"
+                f"เปลี่ยน {cumul_sign}{cumulative_change:.2f} บาท (น้อยกว่าเกณฑ์ 0.50 บาท)"
             )
 
     elif decision == "regular":
-        rs = thai_date(round_info["rate_start"])
+        rs  = thai_date(round_info["rate_start"])
         re_ = thai_date(round_info["rate_end"])
         lines = [
             f"📋 ปรับอัตราค่าขนส่ง (รอบปกติ) | {today_str}",
             "",
             f"💰 Hi Diesel B7 (PTT): {today_price:.2f} บาท/ลิตร",
             f"📌 อ้างอิงรอบก่อน: {last_adj_price:.2f} บาท ({last_adj_str})",
-            f"📊 เปลี่ยนแปลง: {chg_sign}{cumulative_change:.2f} บาท/ลิตร",
+            f"📊 เปลี่ยนสะสม: {cumul_sign}{cumulative_change:.2f} บาท/ลิตร",
             "",
             f"✅ ปรับอัตราค่าขนส่งรอบ {round_info['num']}",
             f"📅 มีผลวันที่ {rs} – {re_}",
@@ -1069,7 +1078,7 @@ def build_message(
             "",
             f"💰 Hi Diesel B7 (PTT): {today_price:.2f} บาท/ลิตร",
             f"📌 อ้างอิงล่าสุด: {last_adj_price:.2f} บาท ({last_adj_str})",
-            f"📊 เปลี่ยนสะสม: {chg_sign}{cumulative_change:.2f} บาท/ลิตร ⚠️",
+            f"📊 เปลี่ยนครั้งนี้: {single_sign}{single_change:.2f} บาท/ลิตร ⚠️",
             "",
             "⚡ เกินเกณฑ์ 2.00 บาท → กรณีพิเศษ",
             f"📅 มีผลพรุ่งนี้ ({thai_date(tomorrow)})",
@@ -1078,6 +1087,8 @@ def build_message(
 
     if source:
         lines.append(f"\n📡 แหล่งข้อมูล: {source}")
+    if dashboard_url:
+        lines.append(f"📊 Dashboard: {dashboard_url}")
 
     return "\n".join(lines)
 
@@ -1102,8 +1113,10 @@ def main():
     cfg   = load_config()
     state = load_state()
 
-    last_adj_price = float(state["lastAdjPrice"])
-    last_adj_date  = state["lastAdjDate"]
+    last_adj_price  = float(state["lastAdjPrice"])
+    last_adj_date   = state["lastAdjDate"]
+    # lastSeenPrice = ราคา PTT ที่เห็นล่าสุด (ใช้ตรวจ special — single-day change)
+    last_seen_price = float(state.get("lastSeenPrice", last_adj_price))
 
     # 2) วันที่วันนี้
     today = today_th()
@@ -1130,33 +1143,42 @@ def main():
 
     # 5) คำนวณการเปลี่ยนแปลง
     if today_price is not None:
+        # single_change: เปรียบกับราคาล่าสุดที่เห็น → ใช้ตรวจ special
+        single_change     = round(today_price - last_seen_price, 2)
+        # cumulative_change: สะสมจากการปรับล่าสุด → ใช้ตรวจ regular
         cumulative_change = round(today_price - last_adj_price, 2)
-        abs_change        = abs(cumulative_change)
-        print(f"📊 เปลี่ยนสะสม: {cumulative_change:+.2f} บาท (จาก {last_adj_price:.2f})")
+        abs_single        = abs(single_change)
+        abs_cumul         = abs(cumulative_change)
+        print(f"📊 เปลี่ยน (single):    {single_change:+.2f} บาท (จาก lastSeen {last_seen_price:.2f})")
+        print(f"📊 เปลี่ยน (cumulative): {cumulative_change:+.2f} บาท (จาก lastAdj {last_adj_price:.2f})")
     else:
-        cumulative_change = 0.0
-        abs_change        = 0.0
+        single_change = cumulative_change = 0.0
+        abs_single = abs_cumul = 0.0
 
     # 6) ตัดสินใจ
+    # พิเศษ: single change > 2.00 ฿ (ราคา PTT กระโดดครั้งเดียว)
+    # ปกติ:  cumulative ≥ 0.50 ฿ บนวันอ้างอิง (สะสมจากการปรับล่าสุด)
     decision = "none"
     if today_price is not None:
-        if abs_change > cfg["rules"]["specialThreshold"]:        # > 2.00
+        if abs_single > cfg["rules"]["specialThreshold"]:              # > 2.00
             decision = "special"
-        elif ref_today and abs_change >= cfg["rules"]["normalThreshold"]:  # ≥ 0.50
+        elif ref_today and abs_cumul >= cfg["rules"]["normalThreshold"]:  # ≥ 0.50
             decision = "regular"
 
     print(f"⚖️  ผลการตัดสินใจ: {decision}")
 
     # 7) สร้างข้อความ
     message = build_message(
-        today           = today,
-        today_price     = today_price,
-        last_adj_price  = last_adj_price,
-        last_adj_date   = last_adj_date,
-        decision        = decision,
-        round_info      = round_info,
+        today             = today,
+        today_price       = today_price,
+        last_adj_price    = last_adj_price,
+        last_adj_date     = last_adj_date,
+        decision          = decision,
+        round_info        = round_info,
         cumulative_change = cumulative_change,
-        source          = source,
+        single_change     = single_change,
+        source            = source,
+        dashboard_url     = cfg.get("dashboardUrl", ""),
     )
 
     # 8) ส่ง LINE
@@ -1171,14 +1193,19 @@ def main():
     if not args.dry_run:
         today_str = today.isoformat()
         state["lastRunDate"]   = today_str
-        state["lastRunResult"] = f"decision={decision} | ราคา={today_price} | เปลี่ยน={cumulative_change:+.2f}"
+        state["lastRunResult"] = f"decision={decision} | ราคา={today_price} | single={single_change:+.2f} | cumul={cumulative_change:+.2f}"
         state["updatedAt"]     = today_str
+
+        # อัปเดต lastSeenPrice ทุกวันที่รู้ราคา (ใช้สำหรับ special check ครั้งหน้า)
+        if today_price is not None:
+            state["lastSeenPrice"] = today_price
 
         if decision in ("regular", "special") and today_price is not None:
             state["lastAdjPrice"] = today_price
             state["lastAdjDate"]  = today_str
             state["lastAdjType"]  = decision
-            state["lastAdjNote"]  = f"{'กรณีพิเศษ' if decision == 'special' else 'ปรับปกติ'}: {cumulative_change:+.2f} ฿ → อ้างอิงใหม่ {today_price:.2f} ฿"
+            chg_for_note = single_change if decision == "special" else cumulative_change
+            state["lastAdjNote"]  = f"{'กรณีพิเศษ' if decision == 'special' else 'ปรับปกติ'}: {chg_for_note:+.2f} ฿ → อ้างอิงใหม่ {today_price:.2f} ฿"
 
             if decision == "regular":
                 # คำนวณ nextRegularRefDate (ref day ของรอบถัดไป)

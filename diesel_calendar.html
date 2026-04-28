@@ -124,7 +124,7 @@
   }
 
   .cal-cell {
-    min-height: 72px;
+    min-height: 86px;
     border-right: 1px solid #e2e8f0;
     border-bottom: 1px solid #e2e8f0;
     padding: 6px 8px;
@@ -144,6 +144,12 @@
   }
   .cal-cell.weekend .day-num { color: #e53e3e; }
 
+  /* ── Round background colors (สีพื้นหลังแต่ละรอบ) ── */
+  .cal-cell.round-1 { background-color: #EBF8FF; }  /* รอบ 1 (1–7)   : ฟ้าอ่อน   */
+  .cal-cell.round-2 { background-color: #F0FFF4; }  /* รอบ 2 (8–14)  : เขียวอ่อน */
+  .cal-cell.round-3 { background-color: #FAF5FF; }  /* รอบ 3 (15–21) : ม่วงอ่อน  */
+  .cal-cell.round-4 { background-color: #FFFAF0; }  /* รอบ 4 (22–สิ้นเดือน) : ส้มอ่อน */
+
   /* Highlights */
   .cal-cell.today { background: #ebf8ff; }
   .cal-cell.today .day-num {
@@ -156,8 +162,9 @@
   }
   .cal-cell.ref-day { border-top: 3px solid #3182ce; }
   .cal-cell.rate-period { background: #fffff0; }
-  .cal-cell.adj-day { background: #f0fff4; }
-  .cal-cell.adj-day-special { background: #fff5f5; }
+  /* adj colors override round colors (order matters) */
+  .cal-cell.adj-day         { background-color: #C6F6D5 !important; border-top: 3px solid #38a169; }
+  .cal-cell.adj-day-special { background-color: #FEB2B2 !important; border-top: 3px solid #e53e3e; }
 
   .day-tag {
     font-size: 0.62rem;
@@ -222,12 +229,40 @@
   }
 
   /* ── Responsive ── */
+  /* ── Month Summary ── */
+  .month-summary {
+    background: white;
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin: 0 24px 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    font-size: 0.82rem;
+    color: #4a5568;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+  .month-summary .sum-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .sum-dot {
+    width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0;
+  }
+  .sum-dot.special { background: #fc8181; }
+  .sum-dot.regular { background: #68d391; }
+  .sum-dot.ref     { border: 2px solid #3182ce; background: white; }
+  .month-summary .sum-label { font-weight: 600; color: #2d3748; }
+
   @media (max-width: 600px) {
     .header { padding: 14px 16px; }
     .dashboard { padding: 14px 16px 6px; gap: 10px; }
     .cal-wrapper { padding: 6px 16px 20px; }
     .legend { padding: 10px 16px 16px; }
-    .cal-cell { min-height: 58px; padding: 4px 5px; }
+    .month-summary { margin: 0 16px 8px; }
+    .cal-cell { min-height: 68px; padding: 4px 5px; }
     .dashboard { grid-template-columns: 1fr 1fr; }
     .card .value { font-size: 1.5rem; }
   }
@@ -268,6 +303,8 @@
   </div>
 </div>
 
+<div id="monthSummary" class="month-summary" style="display:none"></div>
+
 <div class="cal-wrapper">
   <div class="cal-header">
     <div class="cal-title" id="calTitle">—</div>
@@ -301,20 +338,42 @@
     <div class="legend-box lb-ref"></div> วันอ้างอิง (5,12,19,27)
   </div>
   <div class="legend-item">
-    <div class="legend-box lb-rate"></div> ช่วงใช้อัตราค่าขนส่ง
+    <div class="legend-box" style="background:#C6F6D5;border:1px solid #e2e8f0;border-top:3px solid #38a169"></div> ปรับค่าขนส่ง (ปกติ)
   </div>
   <div class="legend-item">
-    <div class="legend-box lb-adj"></div> วันปรับค่าขนส่ง (ปกติ)
+    <div class="legend-box" style="background:#FEB2B2;border:1px solid #e2e8f0;border-top:3px solid #e53e3e"></div> ปรับค่าขนส่ง (พิเศษ)
+  </div>
+  <div style="width:100%;border-top:1px solid #e2e8f0;margin:4px 0"></div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:#EBF8FF;border:1px solid #bee3f8"></div> รอบ 1 (1–7)
   </div>
   <div class="legend-item">
-    <div class="legend-box lb-special"></div> วันปรับค่าขนส่ง (พิเศษ)
+    <div class="legend-box" style="background:#F0FFF4;border:1px solid #9ae6b4"></div> รอบ 2 (8–14)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:#FAF5FF;border:1px solid #d6bcfa"></div> รอบ 3 (15–21)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:#FFFAF0;border:1px solid #fbd38d"></div> รอบ 4 (22–สิ้นเดือน)
+  </div>
+</div>
+
+<!-- Price Chart -->
+<div id="priceChartWrap" style="display:none;padding:0 24px 24px">
+  <div style="background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,0.08);padding:16px 20px">
+    <div style="font-size:0.85rem;font-weight:700;color:#2d3748;margin-bottom:10px">
+      📈 กราฟราคา Hi Diesel B7
+    </div>
+    <div id="priceChart"></div>
   </div>
 </div>
 
 <script>
 // ── Config ──────────────────────────────────────────────────────────
 const GITHUB_RAW = 'https://raw.githubusercontent.com/kanjanaopas/diesel-freight-alert/main/freight_state.json';
-const REF_DAYS = [5, 12, 19, 27];
+const REF_DAYS_SET = new Set([5, 12, 19, 27]);
+const SPECIAL_THR  = 2.00;
+const NORMAL_THR   = 0.50;
 const TH_MONTHS = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.',
                    'ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const TH_MONTHS_FULL = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
@@ -323,6 +382,7 @@ const TH_MONTHS_FULL = ['','มกราคม','กุมภาพันธ์'
 // ── State ────────────────────────────────────────────────────────────
 let stateData = null;
 let viewYear, viewMonth;
+let adjMap = {}, priceMap = {};  // computed from priceHistory
 
 const todayTH = (() => {
   const utc = new Date();
@@ -355,6 +415,53 @@ function isBetween(cell, start, end) {
   const e = end.y * 10000 + end.m * 100 + end.d;
   return c >= s && c <= e;
 }
+function fmtChg(chg) {
+  const s = chg >= 0 ? '+' : '';
+  return s + chg.toFixed(2);
+}
+function dateKey(y, m, d) {
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+// ── Calculate adjustments from price history ─────────────────────────
+// กฎ:
+//   พิเศษ  — เปรียบกับราคา PTT ครั้งล่าสุด (single-day change) > 2.00 ฿
+//   ปกติ   — เปรียบกับ lastAdjPrice (cumulative) ≥ 0.50 ฿ บนวันอ้างอิงเท่านั้น
+function buildAdjMaps(history, startPrice) {
+  const pMap = {}, aMap = {};
+  let lastAdjPrice = startPrice;   // reset เมื่อมีการปรับ (ใช้สำหรับ regular)
+  let prevPTTPrice = startPrice;   // ราคา PTT ก่อนหน้า (ใช้สำหรับ special)
+
+  for (const {date, price} of history) {
+    pMap[date] = price;
+    const day   = parseInt(date.split('-')[2]);
+    const isRef = REF_DAYS_SET.has(day);
+
+    const singleChg = price - prevPTTPrice;   // เปลี่ยนครั้งนี้ (สำหรับ special)
+    const cumulChg  = price - lastAdjPrice;   // สะสมจากการปรับล่าสุด (สำหรับ regular)
+
+    let adjType = null, displayChange = null;
+
+    if (Math.abs(singleChg) > SPECIAL_THR) {
+      adjType = 'special';
+      displayChange = singleChg;
+    } else if (isRef && Math.abs(cumulChg) >= NORMAL_THR) {
+      adjType = 'regular';
+      displayChange = cumulChg;
+    } else if (isRef) {
+      adjType = 'ref-no-adj';
+      displayChange = cumulChg;
+    }
+
+    aMap[date] = { adjType, price, change: displayChange, isRef };
+
+    prevPTTPrice = price;                                       // อัปเดตทุกวัน
+    if (adjType === 'special' || adjType === 'regular') {
+      lastAdjPrice = price;                                     // reset เฉพาะตอนปรับ
+    }
+  }
+  return { pMap, aMap };
+}
 
 // ── Fetch data ───────────────────────────────────────────────────────
 async function loadData() {
@@ -362,13 +469,21 @@ async function loadData() {
     const res = await fetch(GITHUB_RAW + '?t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
     stateData = await res.json();
+
+    // Pre-compute maps from history
+    if (stateData.priceHistory && stateData.historyStartPrice !== undefined) {
+      const r = buildAdjMaps(stateData.priceHistory, stateData.historyStartPrice);
+      priceMap = r.pMap;
+      adjMap   = r.aMap;
+    }
+
     renderDashboard();
     renderCalendar();
     document.getElementById('lastUpdated').textContent =
       'อัปเดตล่าสุด: ' + new Date().toLocaleTimeString('th-TH');
   } catch(e) {
     showError('ไม่สามารถโหลดข้อมูลได้: ' + e.message);
-    renderCalendar(); // render calendar without price data
+    renderCalendar();
   }
 }
 
@@ -383,11 +498,12 @@ function renderDashboard() {
   if (!stateData) return;
   const s = stateData;
 
-  // Price
-  const price = parseFloat(s.lastAdjPrice || 0).toFixed(2);
-  document.getElementById('curPrice').textContent = price + ' ฿';
+  // Price card — show today's actual price if available, else lastAdjPrice
+  const todayKey = dateKey(todayTH.y, todayTH.m, todayTH.d);
+  const todayPrice = priceMap[todayKey] ?? parseFloat(s.lastAdjPrice || 0);
+  document.getElementById('curPrice').textContent = todayPrice.toFixed(2) + ' ฿';
   document.getElementById('priceDate').textContent =
-    'อ้างอิง ณ ' + fmtDate(s.lastAdjDate);
+    priceMap[todayKey] ? 'ราคาวันนี้' : ('อ้างอิง ณ ' + fmtDate(s.lastAdjDate));
 
   // Status
   const adjType = s.lastAdjType || '';
@@ -428,18 +544,24 @@ function renderCalendar() {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
 
-  // Extract state dates
-  let adjDate = null, rateStart = null, rateEnd = null, adjType = '';
+  // Check if this month has priceHistory data
+  const monthKey = `${y}-${String(m).padStart(2,'0')}`;
+  const hasHistory = Object.keys(priceMap).some(k => k.startsWith(monthKey));
+
+  // State-based data for fallback (current/future months)
+  let statAdjDate = null, rateStart = null, rateEnd = null, statAdjType = '';
   if (stateData) {
-    adjDate   = parseIso(stateData.lastAdjDate);
-    adjType   = stateData.lastAdjType || '';
-    const cr  = stateData.currentRound || {};
+    statAdjDate = parseIso(stateData.lastAdjDate);
+    statAdjType = stateData.lastAdjType || '';
+    const cr = stateData.currentRound || {};
     rateStart = parseIso(cr.rateStart);
     rateEnd   = parseIso(cr.rateEnd);
   }
 
-  // First weekday of month (0=Sun)
-  const firstDay = new Date(y, m - 1, 1).getDay();
+  // Month summary counters
+  let specialCount = 0, regularCount = 0, refNoAdjCount = 0;
+
+  const firstDay    = new Date(y, m - 1, 1).getDay();
   const daysInMonth = new Date(y, m, 0).getDate();
 
   // Empty cells before first day
@@ -451,38 +573,81 @@ function renderCalendar() {
 
   // Day cells
   for (let d = 1; d <= daysInMonth; d++) {
-    const cell = document.createElement('div');
-    const dow = (firstDay + d - 1) % 7; // 0=Sun, 6=Sat
+    const cell   = document.createElement('div');
+    const dow    = (firstDay + d - 1) % 7;
     const isWeekend = dow === 0 || dow === 6;
-    const isToday = sameDay({y, m, d}, todayTH);
-    const isRefDay = REF_DAYS.includes(d);
-    const dayObj = {y, m, d};
-    const isAdjDay = sameDay(dayObj, adjDate);
-    const isRatePeriod = isBetween(dayObj, rateStart, rateEnd);
-    const isSpecialAdj = isAdjDay && adjType === 'special';
+    const isToday   = sameDay({y, m, d}, todayTH);
+    const isRefDay  = REF_DAYS_SET.has(d);
+    const dayObj    = {y, m, d};
+    const dKey      = dateKey(y, m, d);
 
+    // ── History mode ──
+    let adjType = '', dayPrice = null, priceChange = null;
+    if (hasHistory) {
+      dayPrice = priceMap[dKey] ?? null;
+      const info = adjMap[dKey] || {};
+      adjType     = info.adjType || '';
+      priceChange = info.change ?? null;
+    } else {
+      // Fallback: state-based
+      if (sameDay(dayObj, statAdjDate)) adjType = statAdjType;
+    }
+
+    const isSpecial  = adjType === 'special';
+    const isRegular  = adjType === 'regular';
+    const isRefNoAdj = adjType === 'ref-no-adj';
+    const isAdjDay   = isSpecial || isRegular;
+    const isRatePeriod = !hasHistory && isBetween(dayObj, rateStart, rateEnd) && !isAdjDay;
+
+    // Round classification (1–4)
+    const roundNum = d <= 7 ? 1 : d <= 14 ? 2 : d <= 21 ? 3 : 4;
+
+    if (isSpecial)  specialCount++;
+    if (isRegular)  regularCount++;
+    if (isRefNoAdj) refNoAdjCount++;
+
+    // Classes
     let classes = 'cal-cell';
-    if (isWeekend) classes += ' weekend';
-    if (isToday)   classes += ' today';
+    if (isWeekend)  classes += ' weekend';
+    classes += ` round-${roundNum}`;              // สีพื้นหลังตามรอบ
+    if (isToday)    classes += ' today';
     if (isRefDay && !isToday) classes += ' ref-day';
-    if (isRatePeriod && !isAdjDay) classes += ' rate-period';
-    if (isAdjDay && !isSpecialAdj) classes += ' adj-day';
-    if (isSpecialAdj) classes += ' adj-day-special';
-
+    if (isRatePeriod)  classes += ' rate-period';
+    if (isRegular)     classes += ' adj-day';     // override round color
+    if (isSpecial)     classes += ' adj-day-special'; // override round color
     cell.className = classes;
 
-    // Day number
+    // ── Day number ──
     const numEl = document.createElement('div');
     numEl.className = 'day-num';
     numEl.textContent = d;
     cell.appendChild(numEl);
 
-    // Tags
+    // ── Price ──
+    if (dayPrice !== null) {
+      const prEl = document.createElement('div');
+      prEl.className = 'day-price';
+      prEl.textContent = dayPrice.toFixed(2) + ' ฿';
+      cell.appendChild(prEl);
+    } else if (!hasHistory && isAdjDay && stateData) {
+      const prEl = document.createElement('div');
+      prEl.className = 'day-price';
+      prEl.textContent = parseFloat(stateData.lastAdjPrice).toFixed(2) + ' ฿';
+      cell.appendChild(prEl);
+    }
+
+    // ── Tags ──
     const tags = [];
-    if (isRefDay) tags.push(['วันอ้างอิง', 'tag-ref']);
-    if (isRatePeriod) tags.push(['ใช้อัตรานี้', 'tag-rate']);
-    if (isAdjDay && !isSpecialAdj) tags.push(['ปรับปกติ', 'tag-adj']);
-    if (isSpecialAdj) tags.push(['ปรับพิเศษ', 'tag-special']);
+    if (isSpecial) {
+      const chgStr = priceChange !== null ? ` ${fmtChg(priceChange)}` : '';
+      tags.push([`พิเศษ${chgStr}`, 'tag-special']);
+    }
+    if (isRegular) {
+      const chgStr = priceChange !== null ? ` ${fmtChg(priceChange)}` : '';
+      tags.push([`ปกติ${chgStr}`, 'tag-adj']);
+    }
+    if (isRefDay && !isAdjDay) tags.push(['อ้างอิง', 'tag-ref']);
+    if (isRatePeriod)          tags.push(['ใช้อัตรานี้', 'tag-rate']);
 
     tags.forEach(([text, cls]) => {
       const t = document.createElement('div');
@@ -491,25 +656,157 @@ function renderCalendar() {
       cell.appendChild(t);
     });
 
-    // Show price on adjustment day
-    if (isAdjDay && stateData) {
-      const pr = document.createElement('div');
-      pr.className = 'day-price';
-      pr.textContent = parseFloat(stateData.lastAdjPrice).toFixed(2) + ' ฿';
-      cell.appendChild(pr);
-    }
-
     grid.appendChild(cell);
   }
 
-  // Fill trailing cells to complete last row
-  const totalCells = firstDay + daysInMonth;
-  const trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  // Trailing empty cells
+  const total    = firstDay + daysInMonth;
+  const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
   for (let i = 0; i < trailing; i++) {
     const cell = document.createElement('div');
     cell.className = 'cal-cell empty';
     grid.appendChild(cell);
   }
+
+  // ── Price chart ──
+  renderPriceChart(y, m);
+
+  // ── Month summary bar ──
+  const sumEl = document.getElementById('monthSummary');
+  if (hasHistory && (specialCount + regularCount > 0)) {
+    const total = specialCount + regularCount;
+    sumEl.style.display = 'flex';
+    sumEl.innerHTML = `
+      <span class="sum-label">สรุปเดือนนี้:</span>
+      <span class="sum-item">
+        <span class="sum-dot special"></span>
+        ปรับพิเศษ <strong>${specialCount}</strong> ครั้ง
+      </span>
+      <span class="sum-item">
+        <span class="sum-dot regular"></span>
+        ปรับปกติ <strong>${regularCount}</strong> ครั้ง
+      </span>
+      <span class="sum-item" style="color:#718096">
+        รวมทั้งหมด <strong>${total}</strong> ครั้ง
+      </span>`;
+  } else {
+    sumEl.style.display = 'none';
+  }
+}
+
+// ── Price Chart (SVG) ────────────────────────────────────────────────
+function renderPriceChart(y, m) {
+  const wrap  = document.getElementById('priceChartWrap');
+  const chart = document.getElementById('priceChart');
+  const daysInMonth = new Date(y, m, 0).getDate();
+
+  // Collect daily price data
+  const data = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const k = dateKey(y, m, d);
+    if (priceMap[k] !== undefined) {
+      data.push({ d, price: priceMap[k], adj: adjMap[k] || {} });
+    }
+  }
+
+  if (data.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+
+  // SVG layout
+  const W = 760, H = 180;
+  const mL = 52, mR = 16, mT = 18, mB = 32;
+  const pW = W - mL - mR, pH = H - mT - mB;
+
+  const prices = data.map(p => p.price);
+  const rawMin = Math.min(...prices), rawMax = Math.max(...prices);
+  const pad  = Math.max((rawMax - rawMin) * 0.15, 0.5);
+  const minP = rawMin - pad, maxP = rawMax + pad;
+
+  const xS = d  => mL + (d - 1) / (daysInMonth - 1) * pW;
+  const yS = p  => mT + pH - (p - minP) / (maxP - minP) * pH;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">`;
+
+  // Background
+  svg += `<rect x="${mL}" y="${mT}" width="${pW}" height="${pH}" fill="#f8fafc" rx="4"/>`;
+
+  // Horizontal gridlines + Y labels
+  const yTicks = 4;
+  for (let i = 0; i <= yTicks; i++) {
+    const p = minP + (maxP - minP) * i / yTicks;
+    const yy = yS(p);
+    svg += `<line x1="${mL}" y1="${yy}" x2="${mL+pW}" y2="${yy}" stroke="#e2e8f0" stroke-width="1"/>`;
+    svg += `<text x="${mL-5}" y="${yy+4}" text-anchor="end" font-size="10" fill="#718096">${p.toFixed(1)}</text>`;
+  }
+
+  // Round background bands
+  const rounds = [
+    { s:1,  e:7,  color:'#EBF8FF' },
+    { s:8,  e:14, color:'#F0FFF4' },
+    { s:15, e:21, color:'#FAF5FF' },
+    { s:22, e:daysInMonth, color:'#FFFAF0' },
+  ];
+  for (const r of rounds) {
+    const x1 = xS(r.s), x2 = xS(Math.min(r.e, daysInMonth));
+    svg += `<rect x="${x1}" y="${mT}" width="${x2-x1}" height="${pH}" fill="${r.color}" opacity="0.7"/>`;
+  }
+
+  // Ref day vertical lines
+  for (const rd of [5, 12, 19, 27]) {
+    if (rd <= daysInMonth) {
+      const xx = xS(rd);
+      svg += `<line x1="${xx}" y1="${mT}" x2="${xx}" y2="${mT+pH}" stroke="#3182ce" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>`;
+      svg += `<text x="${xx}" y="${mT-4}" text-anchor="middle" font-size="9" fill="#3182ce">${rd}</text>`;
+    }
+  }
+
+  // Price step-line path (connect all days)
+  const allDays = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    const k = dateKey(y, m, d);
+    const p = priceMap[k];
+    if (p !== undefined) allDays.push({ d, p });
+  }
+  if (allDays.length > 1) {
+    const pts = allDays.map(({d, p}) => `${xS(d).toFixed(1)},${yS(p).toFixed(1)}`).join(' ');
+    svg += `<polyline points="${pts}" fill="none" stroke="#2b6cb0" stroke-width="2" stroke-linejoin="round"/>`;
+  }
+
+  // Dots — only on price-change days
+  let prevP = null;
+  for (const { d, price, adj } of data) {
+    if (price === prevP) { prevP = price; continue; }
+    const xx = xS(d), yy = yS(price);
+    const aType = adj.adjType || '';
+    const col = aType === 'special' ? '#e53e3e' : aType === 'regular' ? '#38a169' : '#2b6cb0';
+    const r   = (aType === 'special' || aType === 'regular') ? 5 : 3;
+    svg += `<circle cx="${xx.toFixed(1)}" cy="${yy.toFixed(1)}" r="${r}" fill="${col}" stroke="white" stroke-width="1.5"/>`;
+    // Price label above dot
+    const labelY = yy - r - 3;
+    svg += `<text x="${xx.toFixed(1)}" y="${labelY}" text-anchor="middle" font-size="9" font-weight="600" fill="${col}">${price.toFixed(2)}</text>`;
+    prevP = price;
+  }
+
+  // X axis labels (selected days)
+  const xLabels = new Set([1, 5, 10, 12, 15, 19, 20, 25, 27, daysInMonth]);
+  for (const d of xLabels) {
+    if (d <= daysInMonth) {
+      svg += `<text x="${xS(d).toFixed(1)}" y="${mT+pH+14}" text-anchor="middle" font-size="9" fill="#718096">${d}</text>`;
+    }
+  }
+
+  // Axis lines
+  svg += `<line x1="${mL}" y1="${mT}" x2="${mL}" y2="${mT+pH}" stroke="#cbd5e0" stroke-width="1"/>`;
+  svg += `<line x1="${mL}" y1="${mT+pH}" x2="${mL+pW}" y2="${mT+pH}" stroke="#cbd5e0" stroke-width="1"/>`;
+
+  // Legend dots
+  const legY = H - 4;
+  svg += `<circle cx="${mL+10}" cy="${legY-4}" r="4" fill="#e53e3e"/><text x="${mL+17}" y="${legY}" font-size="9" fill="#4a5568">ปรับพิเศษ</text>`;
+  svg += `<circle cx="${mL+70}" cy="${legY-4}" r="4" fill="#38a169"/><text x="${mL+77}" y="${legY}" font-size="9" fill="#4a5568">ปรับปกติ</text>`;
+  svg += `<circle cx="${mL+128}" cy="${legY-4}" r="3" fill="#2b6cb0"/><text x="${mL+135}" y="${legY}" font-size="9" fill="#4a5568">ราคาเปลี่ยน</text>`;
+
+  svg += '</svg>';
+  chart.innerHTML = svg;
 }
 
 // ── Navigation ───────────────────────────────────────────────────────
@@ -526,7 +823,6 @@ function goToday() {
 
 // ── Init ─────────────────────────────────────────────────────────────
 loadData();
-// Auto-refresh ทุก 30 นาที
 setInterval(loadData, 30 * 60 * 1000);
 </script>
 </body>
