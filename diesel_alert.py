@@ -1200,6 +1200,22 @@ def main():
         if today_price is not None:
             state["lastSeenPrice"] = today_price
 
+        # อัปเดต priceHistory อัตโนมัติ (dashboard ใช้แสดงราคาบน calendar)
+        if today_price is not None:
+            today_iso = today.isoformat()
+            history   = state.get("priceHistory", [])
+            existing_idx = next(
+                (i for i, h in enumerate(history) if h.get("date") == today_iso), -1
+            )
+            if existing_idx >= 0:
+                history[existing_idx]["price"] = today_price
+            else:
+                history.append({"date": today_iso, "price": today_price})
+            history.sort(key=lambda x: x["date"])
+            state["priceHistory"] = history[-90:]
+            if "historyStartPrice" not in state and history:
+                state["historyStartPrice"] = history[0]["price"]
+
         if decision in ("regular", "special") and today_price is not None:
             state["lastAdjPrice"] = today_price
             state["lastAdjDate"]  = today_str
