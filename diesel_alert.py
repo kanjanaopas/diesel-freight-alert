@@ -1075,9 +1075,16 @@ def build_message(
                 f"เปลี่ยน {cumul_sign}{cumulative_change:.2f} บาท (น้อยกว่าเกณฑ์ 0.50 บาท)"
             )
 
+
+
     elif decision == "regular":
-        rs  = thai_date(round_info["rate_start"])
-        re_ = thai_date(round_info["rate_end"])
+        next_start, next_end = get_next_round_dates(today)   # ← รอบที่จะมีผลจริง
+        rs  = thai_date(next_start)
+        re_ = thai_date(next_end)
+
+
+
+
         lines = [
             f"📋 ปรับอัตราค่าขนส่ง (รอบปกติ) | {today_str}",
             "",
@@ -1179,10 +1186,12 @@ def main():
     # ปกติ:  cumulative ≥ 0.50 ฿ บนวันอ้างอิง (สะสมจากการปรับล่าสุด)
     decision = "none"
     if today_price is not None:
-        if abs_cumul > cfg["rules"]["specialThreshold"]:               # > 2.00 (cumulative)
-            decision = "special"
-        elif ref_today and abs_cumul >= cfg["rules"]["normalThreshold"]:  # ≥ 0.50
+        # refDay ตรวจก่อนเสมอ — special ใช้เฉพาะระหว่างรอบ (ไม่ใช่วัน refDay)
+        if ref_today and abs_cumul >= cfg["rules"]["normalThreshold"]:        # normal ก่อน ← ถูก
             decision = "regular"
+        elif not ref_today and abs_cumul > cfg["rules"]["specialThreshold"]:  # special เฉพาะระหว่างรอบ
+            decision = "special"
+                
 
     print(f"⚖️  ผลการตัดสินใจ: {decision}")
 
