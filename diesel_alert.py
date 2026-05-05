@@ -962,6 +962,25 @@ def is_ref_day(d: date) -> bool:
     """วันนี้เป็นวันอ้างอิงปกติหรือไม่ (5, 12, 19, 27)"""
     return d.day in (5, 12, 19, 27)
 
+def get_next_round_dates(today: date) -> tuple[date, date]:
+    """คืนวันเริ่ม-สิ้นสุดของรอบที่จะมีผล หลังจาก refDay นี้"""
+    day = today.day
+    m, y = today.month, today.year
+
+    def last_day(yr, mo):
+        if mo == 12:
+            return date(yr + 1, 1, 1) - timedelta(days=1)
+        return date(yr, mo + 1, 1) - timedelta(days=1)
+
+    if day == 5:     return date(y, m, 8),  date(y, m, 14)          # → รอบ 2 (8–14)
+    elif day == 12:  return date(y, m, 15), date(y, m, 21)          # → รอบ 3 (15–21)
+    elif day == 19:  return date(y, m, 22), last_day(y, m)          # → รอบ 4 (22–สิ้นเดือน)
+    elif day == 27:                                                    # → รอบ 1 เดือนถัดไป
+        next_m = m + 1 if m < 12 else 1
+        next_y = y if m < 12 else y + 1
+        return date(next_y, next_m, 1), date(next_y, next_m, 7)
+    else:
+        return today, today + timedelta(days=1)  # fallback
 
 # ──────────────────────────────────────────────
 # LINE MESSAGING
