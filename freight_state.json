@@ -1,22 +1,22 @@
 {
   "_comment": "State file — แก้ไขด้วยมือได้ถ้าราคาอ้างอิงเปลี่ยน | GitHub Actions จะ commit ไฟล์นี้กลับ repo อัตโนมัติหลังทุกการรัน",
-  "lastAdjPrice": 40.8,
-  "lastAdjDate": "2026-05-05",
+  "lastAdjPrice": 39.95,
+  "lastAdjDate": "2026-05-12",
   "lastAdjType": "regular",
-  "lastAdjNote": "ปรับปกติ: +0.60 ฿ → อ้างอิงใหม่ 40.80 ฿",
+  "lastAdjNote": "ปรับปกติ: -0.85 ฿ → อ้างอิงใหม่ 39.95 ฿",
   "currentRound": {
-    "num": 1,
-    "refDate": "2026-05-05",
-    "refPrice": 40.8,
-    "rateStart": "2026-05-01",
-    "rateEnd": "2026-05-07"
+    "num": 2,
+    "refDate": "2026-05-12",
+    "refPrice": 39.95,
+    "rateStart": "2026-05-08",
+    "rateEnd": "2026-05-14"
   },
-  "nextRegularRefDate": "2026-05-12",
-  "nextRegularRoundStart": "2026-05-15",
+  "nextRegularRefDate": "2026-05-19",
+  "nextRegularRoundStart": "2026-05-22",
   "lastSeenPrice": 39.95,
-  "lastRunDate": "2026-05-11",
-  "updatedAt": "2026-05-11",
-  "lastRunResult": "decision=none | ราคา=39.95 | single=+0.00 | cumul=-0.85",
+  "lastRunDate": "2026-05-12",
+  "updatedAt": "2026-05-12",
+  "lastRunResult": "decision=regular | ราคา=39.95 | single=+0.00 | cumul=-0.85",
   "historyStartPrice": 40.74,
   "priceHistory": [
     {
@@ -181,6 +181,10 @@
     },
     {
       "date": "2026-05-11",
+      "price": 39.95
+    },
+    {
+      "date": "2026-05-12",
       "price": 39.95
     }
   ]
