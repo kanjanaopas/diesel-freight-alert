@@ -16,7 +16,7 @@
   "lastSeenPrice": 40.75,
   "lastRunDate": "2026-05-13",
   "updatedAt": "2026-05-13",
-  "lastRunResult": "decision=none | ราคา=40.75 | single=+0.80 | cumul=+0.80",
+  "lastRunResult": "decision=none | ราคา=40.75 | single=+0.00 | cumul=+0.80",
   "historyStartPrice": 40.74,
   "priceHistory": [
     {
@@ -191,6 +191,5 @@
       "date": "2026-05-13",
       "price": 40.75
     }
-  ],
-  "lastError": "LINE ส่งไม่ได้ — 2026-05-13"
+  ]
 }
