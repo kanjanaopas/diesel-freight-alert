@@ -16,7 +16,7 @@
   "lastSeenPrice": 41.45,
   "lastRunDate": "2026-05-14",
   "updatedAt": "2026-05-14",
-  "lastRunResult": "decision=none | ราคา=41.45 | single=+0.70 | cumul=+1.50",
+  "lastRunResult": "decision=none | ราคา=41.45 | single=+0.00 | cumul=+1.50",
   "historyStartPrice": 40.74,
   "priceHistory": [
     {
