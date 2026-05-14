@@ -49,6 +49,9 @@ def load_config():
     # GitHub Secrets override ค่าใน file
     cfg["lineNotifyToken"] = os.environ.get("LINE_TOKEN") or cfg.get("lineNotifyToken", "")
     cfg["lineUserId"]      = os.environ.get("LINE_USER_ID") or cfg.get("lineUserId", "")
+    cfg["gmailUser"]       = os.environ.get("GMAIL_USER") or cfg.get("gmailUser", "")
+    cfg["gmailAppPass"]    = os.environ.get("GMAIL_APP_PASSWORD") or cfg.get("gmailAppPass", "")
+    cfg["emailTo"]         = os.environ.get("EMAIL_TO") or cfg.get("emailTo", cfg.get("gmailUser", ""))
     return cfg
 
 def load_state():
