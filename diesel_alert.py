@@ -27,6 +27,10 @@ import argparse
 import xml.etree.ElementTree as ET
 from datetime import datetime, date, timedelta
 
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import requests
 from bs4 import BeautifulSoup
 
@@ -1022,6 +1026,31 @@ def send_line(token: str, user_id: str, message: str, dry_run: bool = False) -> 
         print(f"❌ LINE exception: {e}")
         return False
 
+def send_email(gmail_user: str, gmail_app_pass: str, to: str,
+               subject: str, body: str, dry_run: bool = False) -> bool:
+    if not gmail_user or not gmail_app_pass:
+        print("⚠️ Email: ไม่มี GMAIL_USER / GMAIL_APP_PASSWORD — ข้ามการส่ง email")
+        return False
+    if dry_run:
+        print(f"\n──── DRY RUN EMAIL ────")
+        print(f"To: {to}\nSubject: {subject}\n{body}")
+        print("──────────────────────\n")
+        return True
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = gmail_user
+        msg["To"]      = to
+        msg.attach(MIMEText(body, "plain", "utf-8"))
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as server:
+            server.login(gmail_user, gmail_app_pass)
+            server.sendmail(gmail_user, to, msg.as_bytes())
+        print(f"✅ Email sent → {to}")
+        return True
+    except Exception as e:
+        print(f"❌ Email error: {e}")
+        return False
 
 # ──────────────────────────────────────────────
 # MESSAGE BUILDER
@@ -1219,6 +1248,19 @@ def main():
         message  = message,
         dry_run  = args.dry_run,
     )
+    
+    # 8b) ส่ง Email (backup)
+    decision_labels = {"none": "รายงานราคาน้ำมัน", "regular": "ปรับอัตราค่าขนส่ง (รอบปกติ)", "special": "ปรับอัตราค่าขนส่ง (กรณีพิเศษ)"}
+    email_subject = f"🛢️ {decision_labels.get(decision, 'แจ้งเตือนราคาน้ำมัน')} | {thai_date(today)}"
+    email_ok = send_email(
+        gmail_user     = cfg.get("gmailUser", ""),
+        gmail_app_pass = cfg.get("gmailAppPass", ""),
+        to             = cfg.get("emailTo", ""),
+        subject        = email_subject,
+        body           = message,
+        dry_run        = args.dry_run,
+    )
+
 
     # 9) อัปเดต state (ถ้าไม่ใช่ dry-run)
     if not args.dry_run:
