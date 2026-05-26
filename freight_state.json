@@ -13,10 +13,10 @@
   },
   "nextRegularRefDate": "2026-05-27",
   "nextRegularRoundStart": "2026-05-31",
-  "lastSeenPrice": 42.2,
-  "lastRunDate": "2026-05-25",
-  "updatedAt": "2026-05-25",
-  "lastRunResult": "decision=none | ราคา=42.2 | single=+0.00 | cumul=+0.00",
+  "lastSeenPrice": 41.2,
+  "lastRunDate": "2026-05-26",
+  "updatedAt": "2026-05-26",
+  "lastRunResult": "decision=none | ราคา=41.2 | single=-1.00 | cumul=-1.00",
   "historyStartPrice": 40.74,
   "priceHistory": [
     {
@@ -238,7 +238,11 @@
     {
       "date": "2026-05-25",
       "price": 42.2
+    },
+    {
+      "date": "2026-05-26",
+      "price": 41.2
     }
   ],
-  "lastError": "LINE ส่งไม่ได้ — 2026-05-25"
+  "lastError": "LINE ส่งไม่ได้ — 2026-05-26"
 }
