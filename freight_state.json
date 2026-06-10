@@ -14,9 +14,9 @@
   "nextRegularRefDate": "2026-06-05",
   "nextRegularRoundStart": "2026-06-08",
   "lastSeenPrice": 41.3,
-  "lastRunDate": "2026-06-09",
-  "updatedAt": "2026-06-09",
-  "lastRunResult": "decision=none | ราคา=41.3 | single=+0.50 | cumul=+0.10",
+  "lastRunDate": "2026-06-10",
+  "updatedAt": "2026-06-10",
+  "lastRunResult": "decision=none | ราคา=41.3 | single=+0.00 | cumul=+0.10",
   "historyStartPrice": 40.74,
   "priceHistory": [
     {
@@ -297,6 +297,10 @@
     },
     {
       "date": "2026-06-09",
+      "price": 41.3
+    },
+    {
+      "date": "2026-06-10",
       "price": 41.3
     }
   ]
